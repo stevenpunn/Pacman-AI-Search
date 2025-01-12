@@ -87,7 +87,32 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # 1. Loop through the Nodes, through the parent nodes then to the child nodes
+    # 2. If the node is visited, mark it so it isn't visited again
+    # 3. 
+    # util.raiseNotDefined()
+    stack = util.Stack()                    # import stack utils
+    start = problem.getStartState
+    if problem.isGoalState(start):          # if the start is the goal, return empty array
+        return []
+
+    stack = util.Stack()
+    visitedNodes = []                       # tracks visited nodes
+    stack.push(start, [])                   # inserts the start node, as well as empty list into stack
+
+    while stack:
+        pointerNode = stack.pop()           # Pop (removes and returns latest item added)
+        if pointerNode not in visitedNodes:
+            visitedNodes.append(pointerNode)
+            successors = problem.getSuccessors(pointerNode)
+            for child, direction, cost in successors:
+                stack.push(child)
+                tempStack = stack + [direction]
+                stackToCurrent = push(tempStack)
+            currState = stack.pop()
+
+                
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
