@@ -18,6 +18,7 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+#import util.convert
 
 class SearchProblem:
     """
@@ -87,42 +88,95 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    # 1. Loop through the Nodes, through the parent nodes then to the child nodes
-    # 2. If the node is visited, mark it so it isn't visited again
-    # 3. 
+    # 1. Loop through the nodes, through the parent nodes then to the child nodes
+    # 2. If the node is visited, mark it as visited, and store visited nodes
+    # 3. If the node is not visited, expand onto the child nodes
+    # 4. If the child nodes haven't been visited, push onto stack
+
+    # frontier = discovered but not explored
+    # push = add element to the top of the stack
+    # pop = remove and return item on top of stack
+    # need to consider cost and direction
+    '''
+    For a given state, this should return a list of triples, (successor,
+            action, stepCost), where 'successor'
+            '''
+
     # util.raiseNotDefined()
-    stack = util.Stack()                    # import stack utils
-    start = problem.getStartState
-    if problem.isGoalState(start):          # if the start is the goal, return empty array
-        return []
+    frontier = util.Stack()                 # not final list, use to pop from
+    visitedNodes = []                       # stores nodes to not visit again
+    moves = []                              # this will be the final moves list
+    currNode = []
+    startSearch = problem.getStartState()
+    startNode = (startSearch, [])           # need to keep [] to insert a new list
+    frontier.push(startNode)                # insert start into frontier
 
-    stack = util.Stack()
-    visitedNodes = []                       # tracks visited nodes
-    stack.push(start, [])                   # inserts the start node, as well as empty list into stack
-
-    while stack:
-        pointerNode = stack.pop()           # Pop (removes and returns latest item added)
-        if pointerNode not in visitedNodes:
-            visitedNodes.append(pointerNode)
-            successors = problem.getSuccessors(pointerNode)
-            for child, direction, cost in successors:
-                stack.push(child)
-                tempStack = stack + [direction]
-                stackToCurrent = push(tempStack)
-            currState = stack.pop()
-
-                
+    while not frontier.isEmpty():                                   # loops while there are nodes to check
+        currNode, moves = frontier.pop()                            # need to keep together
+        if problem.isGoalState(currNode):                           # end loops if current node is the goal state
+            return moves
+        if currNode not in visitedNodes:                            
+            visitedNodes.append(currNode)                           # add current node to visitedNodes
+            successors = problem.getSuccessors(currNode)            # use to import successor states from util
+            for successor, action, cost in successors:          
+                    updateAction = moves + [action]                 # creates new actions list, adds action to moves list
+                    updateNode = (successor, updateAction)          # creates a list that stores next node to explore, and next move
+                    frontier.push(updateNode)                       
+    return moves
 
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # util.raiseNotDefined()
+    frontier = util.Queue()                 # same as DFS, just change to a queue
+    visitedNodes = []                       # stores nodes to not visit again
+    moves = []                              # this will be the final moves list
+    currNode = []
+    startSearch = problem.getStartState()
+    startNode = (startSearch, [])           
+    frontier.push(startNode)                # insert start into frontier
+
+    while not frontier.isEmpty():                                   # loops while there are nodes to check
+        currNode, moves = frontier.pop()                            # need to keep together
+        if problem.isGoalState(currNode):                           # end loops if goal is reached
+            return moves
+        if currNode not in visitedNodes:                            
+            visitedNodes.append(currNode)
+            successors = problem.getSuccessors(currNode)            # use to import successor states from util
+            for successor, action, stepCost in successors:          # keep stepCost or doesnt work
+                    updateAction = moves + [action]                 # creates new actions list, adds action to moves list
+                    updateNode = (successor, updateAction)          # creates a list that stores next node to explore, and next move
+                    frontier.push(updateNode)                       
+    return moves
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # util.raiseNotDefined()
+    frontier = util.PriorityQueue()         # same as DFS and BFS, just use a priorityQueue
+    visitedNodes = []                       # stores nodes to not visit again
+    moves = []                              # this will be the final moves list
+    currNode = []
+    startSearch = problem.getStartState()
+    startNode = (startSearch, [])           # need to keep [] to insert a new list
+    frontier.push(startNode, 0)                # insert start into frontier, also needs the priority (0)
+
+    while not frontier.isEmpty():                                   # loops while there are nodes to check
+        currNode, moves = frontier.pop()                            # need to keep together or doesnt work
+        if problem.isGoalState(currNode):                           # end loops if goal is reached
+            return moves
+        if currNode not in visitedNodes:                            
+            visitedNodes.append(currNode)
+            successors = problem.getSuccessors(currNode)            # use to import successor states from util
+            for successor, action, stepCost in successors:          # keep stepCost or doesnt work
+                    updateAction = moves + [action]                 # creates new actions list, adds action to moves list
+                    updateNode = (successor, updateAction)          # creates a list that stores next node to explore, and next move
+                    cost = problem.getCostOfActions(updateAction)
+                    if successor not in visitedNodes:
+                         updateNode = (successor, updateAction)
+                         frontier.push(updateNode, cost)             # push the new updated nodem uses cost to determine priority
+    return moves
 
 def nullHeuristic(state, problem=None):
     """
@@ -134,7 +188,30 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # util.raiseNotDefined()
+    # A* = cost of path + heuristic 
+    frontier = util.PriorityQueue()                 # not final list, use to pop from
+    visitedNodes = []                       # stores nodes to not visit again
+    moves = []                              # this will be the final moves list
+    currNode = []
+    startSearch = problem.getStartState()
+    startNode = (startSearch, [])           # need to keep [] to insert a new list
+    frontier.push(startNode, 0)                # insert start into frontier, also needs the priority (0)
+
+    while not frontier.isEmpty():                                   # loops while there are nodes to check
+        currNode, moves = frontier.pop()                            # need to keep together or doesnt work
+        if problem.isGoalState(currNode):                           # end loops if goal is reached
+            return moves
+        if currNode not in visitedNodes:                            
+            visitedNodes.append(currNode)
+            successors = problem.getSuccessors(currNode)            # use to import successor states from util
+            for successor, action, stepCost in successors:          # keep stepCost or doesnt work
+                    updateAction = moves + [action]                 # creates new actions list, adds action to moves list
+                    cost = problem.getCostOfActions(updateAction) + heuristic(successor, problem)
+                    if successor not in visitedNodes:
+                        updateNode = (successor, updateAction)          # creates a list that stores next node to explore, and next move
+                        frontier.push(updateNode, cost)             # push the new updated node, as well as the cost
+    return moves
 
 
 # Abbreviations

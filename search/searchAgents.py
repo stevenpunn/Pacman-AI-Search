@@ -288,6 +288,7 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
+        self.cornersVisited = [0, 0, 0, 0]              # 0 as unvisited for all 4 corners
 
     def getStartState(self):
         """
@@ -295,14 +296,21 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+        startState = (self.startingPosition, self.cornersVisited)          #
+        return startState
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # util.raiseNotDefined()
+        for states in state[1]:
+            if states == 0:             # returns false if one corner isn't visited
+                return False
+            
+        return True
 
     def getSuccessors(self, state):
         """
@@ -314,7 +322,6 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
@@ -325,6 +332,25 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            # Choose a state represenatation that encodes all information to detect whether all 4 corners have been reached
+            # Should use a nested tuple ((x,y) (cornersToBeExplored))
+            # cornersToBeVisited should also be a tuple
+            x,y = state[0]                                  # initalize to have corners be unvisited
+            visitedCorners = state[1]                       # if corners are visited, update to 1 
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            hitsWall = self.walls[nextx][nexty]
+            updateNode = (nextx, nexty)
+            cost = 1                                        # cost to determine ideal moves
+
+            if not hitsWall:
+               updateCornerState = list(visitedCorners)                 # cast as a list for it to work
+               if updateNode in self.corners:                           # if the next corners are found, update to state[1] to mark at true
+                   cornerIndex = self.corners.index(updateNode)         # searches for updateNode's index in self.corners and updates in cornerIndex
+                   updateCornerState[cornerIndex] = True                # update that corner has been visited
+
+               updateState = (updateNode, updateCornerState)            # updates if corner visited or not
+               successors.append((updateState, action, cost))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -360,9 +386,28 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    # an approach can be to remove the walls to generate the most accurate heurtistic
+    # must use manhattan distance
+    # largest MD = last node to visit, if visited, this is the goal state
+    from util import manhattanDistance
+    heuristic = 0
+    visitedNodes = state[1]
+    totalDistance = 0
+    
+    for index in range (len(corners)):              # traverses 
+        if problem.isGoalState(state):          # terminates the code if state is reached
+            return heuristic
+        
+        if not visitedNodes[index]:                                             # if current node is not visited, expand search
+            traveledDistance = manhattanDistance(state[0], corners[index])      # calculates the MD between current and next node to visit
+
+            if traveledDistance > totalDistance:                            
+                totalDistance = traveledDistance                            # if dist to travel > largest distance, set largest = travel
+    return totalDistance
 
 class AStarCornersAgent(SearchAgent):
+
+
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
         self.searchFunction = lambda prob: search.aStarSearch(prob, cornersHeuristic)
@@ -454,7 +499,14 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    foodPosition = foodGrid.asList()
+    heuristic = [0]
+    for foodPos in foodPosition:
+        heuristic.append(mazeDistance(foodPos,problem.getStartState))
+    return max(heuristic)
+
+    #return 0
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -485,7 +537,9 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        from search import breadthFirstSearch
+        return breadthFirstSearch(problem)
+        #util.raiseNotDefined()
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -521,7 +575,13 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
+        # if the position is found within foodList, return true
+        foodList = self.food.asList()
+        if state in(foodList):
+            return True
+        else:
+            return False
 
 def mazeDistance(point1, point2, gameState):
     """
